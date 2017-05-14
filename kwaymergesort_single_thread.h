@@ -35,9 +35,6 @@ The following have been added:
 #include <libgen.h> //for basename()
 using namespace std;
 
-// #include <thread>
-// using namespace std::this_thread; // sleep_for, sleep_until
-
 bool isRegularFile(const string& filename);
 // STLized version of basename()
 // (because POSIX basename() modifies the input string pointer)

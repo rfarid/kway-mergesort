@@ -20,5 +20,10 @@ Speed:
     Time complexity: O(log (N/B)) in which N is the total size and B is the memory size
 
 How to Compile/Run:
-    g++ StringProcessorSingleThread.cpp -o testsort
-    ./testsort 0 english.txt
+    Single Thread version:
+        g++ StringProcessorSingleThread.cpp -o testsort
+        ./testsort 0 english.txt
+    MultiThreaded version:
+        qmake sortTool.pro
+        make
+        ./sortTool 0 english.txt

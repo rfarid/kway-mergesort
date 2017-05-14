@@ -35,8 +35,10 @@ The following have been added:
 #include <libgen.h> //for basename()
 using namespace std;
 
-// #include <thread>
-// using namespace std::this_thread; // sleep_for, sleep_until
+#include <QCoreApplication>
+#include <qtconcurrentrun.h>
+#include <QThread>
+#include <QtCore/qmath.h>
 
 bool isRegularFile(const string& filename);
 // STLized version of basename()
@@ -119,6 +121,7 @@ private:
     bool _compressOutput;
     bool _tempFileUsed;
     ostream *_out;
+    int _file_size=0;
 
     // drives the creation of sorted sub-files stored on disk.
     void DivideAndSort();
@@ -225,10 +228,6 @@ void KwayMergeSort<T>::dispProgress(float progress) {
 template <class T>
 void KwayMergeSort<T>::DivideAndSort() {
 
-    // extract file size
-    ifstream ifile(_inFile.c_str(), ios::binary | ios::ate);
-    int file_size=ceil((float)ifile.tellg());
-    cout<<"file size in bytes="<<file_size<<endl;
     // keeping the progress in percent
     float progress=0.0;
 
@@ -244,6 +243,30 @@ void KwayMergeSort<T>::DivideAndSort() {
         cerr << "Error: The requested input file (" << _inFile << ") could not be opened. Exiting!" << endl;
         exit (1);
     }
+        // number of threads
+    int num_of_ideal_threads=QThread::idealThreadCount();
+    qDebug() <<"num_of_ideal_threads=" << num_of_ideal_threads;
+    // extract file size
+    ifstream ifile(_inFile.c_str(), ios::binary | ios::ate);
+    _file_size=ceil((float)ifile.tellg());
+    cout<<"file size in bytes="<<_file_size<<endl;
+    // calculate block size for each thread
+    int block_size =qCeil(float(_file_size)/float(num_of_ideal_threads));
+
+    // QVector<QFuture <void> > t;
+
+    // for (int i=0;i<num_of_ideal_threads;i++) {
+    //     int stIndex = i*block_size;
+    //     qDebug() << "For thread#" << i << "::"<< stIndex << "::"<< stIndex+block_size;
+    //     QFuture<void> ti = QtConcurrent::run(DivideAndSort, stIndex, stIndex+block_size); 
+    //     t.push_back(ti);
+    // }
+
+    // // for all threads, wait for finished
+    // for (int i=0;i<num_of_ideal_threads;i++) {
+    //     t[i].waitForFinished();
+    // }
+
     vector<T> lineBuffer;
     lineBuffer.reserve(100000);
     unsigned int totalBytes = 0;  // track the number of bytes consumed so far.
@@ -266,7 +289,7 @@ void KwayMergeSort<T>::DivideAndSort() {
 
         // if (total%1000==0)
         //     cout<<total<<endl;
-        progress = float(total)/float(file_size);
+        progress = float(total)/float(_file_size);
         dispProgress(progress);
 
         // sort the buffer and write to a temp file if we have filled up our quota
